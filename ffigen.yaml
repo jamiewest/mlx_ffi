@@ -1,0 +1,48 @@
+name: MlxCBindings
+description: Auto-generated bindings for mlx-c.
+output: lib/src/generated/mlx_bindings.dart
+
+headers:
+  entry-points:
+    - tool/ffigen_include/mlx/c/mlx.h
+
+compiler-opts:
+  - -Itool/ffigen_include
+  - -Ithird_party/mlx-c
+  - -std=c17
+
+exclude-all-by-default: true
+silence-enum-warning: true
+ignore-source-errors: true
+
+functions:
+  include:
+    - '^mlx_.*'
+
+structs:
+  include:
+    - '^mlx_.*'
+
+enums:
+  include:
+    - '^mlx_.*'
+
+typedefs:
+  include:
+    - '^mlx_.*'
+
+unions:
+  include:
+    - '^mlx_.*'
+
+globals:
+  include:
+    - '^mlx_.*'
+
+macros:
+  exclude:
+    - '.*'
+
+comments:
+  style: any
+  length: full
