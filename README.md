@@ -173,4 +173,4 @@ Note: this workflow currently produces macOS artifacts because upstream MLX targ
 
 ## Vendored source
 
-`mlx-c` is vendored at `third_party/mlx-c` and used as the header source for generation.
+`mlx-c` is vendored at `third_party/mlx-c` (as a git submodule) and used as the header source for generation.
