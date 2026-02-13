@@ -6304,6 +6304,169 @@ class MlxCBindings {
   late final _mlx_linalg_tri_inv = _mlx_linalg_tri_invPtr.asFunction<
       int Function(ffi.Pointer<mlx_array>, mlx_array, bool, mlx_stream)>();
 
+  /// Load a local Hugging Face MLX model directory.
+  int mlx_llm_model_load(
+    ffi.Pointer<mlx_llm_model> out,
+    ffi.Pointer<ffi.Char> model_dir,
+    mlx_stream s,
+  ) {
+    return _mlx_llm_model_load(
+      out,
+      model_dir,
+      s,
+    );
+  }
+
+  late final _mlx_llm_model_loadPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mlx_llm_model>, ffi.Pointer<ffi.Char>,
+              mlx_stream)>>('mlx_llm_model_load');
+  late final _mlx_llm_model_load = _mlx_llm_model_loadPtr.asFunction<
+      int Function(
+          ffi.Pointer<mlx_llm_model>, ffi.Pointer<ffi.Char>, mlx_stream)>();
+
+  /// Free a loaded model.
+  int mlx_llm_model_free(
+    mlx_llm_model model,
+  ) {
+    return _mlx_llm_model_free(
+      model,
+    );
+  }
+
+  late final _mlx_llm_model_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(mlx_llm_model)>>(
+          'mlx_llm_model_free');
+  late final _mlx_llm_model_free =
+      _mlx_llm_model_freePtr.asFunction<int Function(mlx_llm_model)>();
+
+  /// Tokenize text into integer token ids.
+  int mlx_llm_tokenize(
+    ffi.Pointer<mlx_vector_int> out,
+    mlx_llm_model model,
+    ffi.Pointer<ffi.Char> text,
+    bool add_bos,
+    bool add_eos,
+  ) {
+    return _mlx_llm_tokenize(
+      out,
+      model,
+      text,
+      add_bos,
+      add_eos,
+    );
+  }
+
+  late final _mlx_llm_tokenizePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mlx_vector_int>, mlx_llm_model,
+              ffi.Pointer<ffi.Char>, ffi.Bool, ffi.Bool)>>('mlx_llm_tokenize');
+  late final _mlx_llm_tokenize = _mlx_llm_tokenizePtr.asFunction<
+      int Function(ffi.Pointer<mlx_vector_int>, mlx_llm_model,
+          ffi.Pointer<ffi.Char>, bool, bool)>();
+
+  /// Decode integer token ids back into text.
+  int mlx_llm_decode(
+    ffi.Pointer<mlx_string> out,
+    mlx_llm_model model,
+    ffi.Pointer<ffi.Int> tokens,
+    int token_count,
+  ) {
+    return _mlx_llm_decode(
+      out,
+      model,
+      tokens,
+      token_count,
+    );
+  }
+
+  late final _mlx_llm_decodePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mlx_string>, mlx_llm_model,
+              ffi.Pointer<ffi.Int>, ffi.Size)>>('mlx_llm_decode');
+  late final _mlx_llm_decode = _mlx_llm_decodePtr.asFunction<
+      int Function(
+          ffi.Pointer<mlx_string>, mlx_llm_model, ffi.Pointer<ffi.Int>, int)>();
+
+  /// Start a new generation for a prompt.
+  int mlx_llm_generation_start(
+    ffi.Pointer<mlx_llm_generation> out,
+    mlx_llm_model model,
+    ffi.Pointer<ffi.Char> prompt,
+    ffi.Pointer<mlx_llm_sampling_options> opts,
+  ) {
+    return _mlx_llm_generation_start(
+      out,
+      model,
+      prompt,
+      opts,
+    );
+  }
+
+  late final _mlx_llm_generation_startPtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Int Function(
+                  ffi.Pointer<mlx_llm_generation>,
+                  mlx_llm_model,
+                  ffi.Pointer<ffi.Char>,
+                  ffi.Pointer<mlx_llm_sampling_options>)>>(
+      'mlx_llm_generation_start');
+  late final _mlx_llm_generation_start =
+      _mlx_llm_generation_startPtr.asFunction<
+          int Function(ffi.Pointer<mlx_llm_generation>, mlx_llm_model,
+              ffi.Pointer<ffi.Char>, ffi.Pointer<mlx_llm_sampling_options>)>();
+
+  /// Poll next generated token piece.
+  int mlx_llm_generation_next(
+    ffi.Pointer<mlx_string> token_text,
+    ffi.Pointer<ffi.Bool> is_done,
+    mlx_llm_generation gen,
+  ) {
+    return _mlx_llm_generation_next(
+      token_text,
+      is_done,
+      gen,
+    );
+  }
+
+  late final _mlx_llm_generation_nextPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<mlx_string>, ffi.Pointer<ffi.Bool>,
+              mlx_llm_generation)>>('mlx_llm_generation_next');
+  late final _mlx_llm_generation_next = _mlx_llm_generation_nextPtr.asFunction<
+      int Function(ffi.Pointer<mlx_string>, ffi.Pointer<ffi.Bool>,
+          mlx_llm_generation)>();
+
+  /// Cancel an in-progress generation.
+  int mlx_llm_generation_cancel(
+    mlx_llm_generation gen,
+  ) {
+    return _mlx_llm_generation_cancel(
+      gen,
+    );
+  }
+
+  late final _mlx_llm_generation_cancelPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(mlx_llm_generation)>>(
+          'mlx_llm_generation_cancel');
+  late final _mlx_llm_generation_cancel = _mlx_llm_generation_cancelPtr
+      .asFunction<int Function(mlx_llm_generation)>();
+
+  /// Free a generation handle.
+  int mlx_llm_generation_free(
+    mlx_llm_generation gen,
+  ) {
+    return _mlx_llm_generation_free(
+      gen,
+    );
+  }
+
+  late final _mlx_llm_generation_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(mlx_llm_generation)>>(
+          'mlx_llm_generation_free');
+  late final _mlx_llm_generation_free = _mlx_llm_generation_freePtr
+      .asFunction<int Function(mlx_llm_generation)>();
+
   /// \defgroup memory Memory operations
   /// /
   /// /**@{
@@ -13464,3 +13627,96 @@ final class mlx_fast_metal_kernel_ extends ffi.Struct {
 }
 
 typedef mlx_fast_metal_kernel = mlx_fast_metal_kernel_;
+
+/// Opaque model handle.
+final class mlx_llm_model_ extends ffi.Struct {
+  external ffi.Pointer<ffi.Void> ctx;
+}
+
+typedef mlx_llm_model = mlx_llm_model_;
+
+/// Opaque generation handle.
+final class mlx_llm_generation_ extends ffi.Struct {
+  external ffi.Pointer<ffi.Void> ctx;
+}
+
+typedef mlx_llm_generation = mlx_llm_generation_;
+
+/// Return codes for LLM APIs.
+enum mlx_llm_status_ {
+  MLX_LLM_STATUS_OK(0),
+  MLX_LLM_STATUS_ERROR(1),
+  MLX_LLM_STATUS_INVALID_ARGUMENT(2),
+  MLX_LLM_STATUS_UNSUPPORTED_PLATFORM(3),
+  MLX_LLM_STATUS_MODEL_NOT_FOUND(4),
+  MLX_LLM_STATUS_ALREADY_ACTIVE_GENERATION(5),
+  MLX_LLM_STATUS_INVALID_HANDLE(6);
+
+  final int value;
+  const mlx_llm_status_(this.value);
+
+  static mlx_llm_status_ fromValue(int value) => switch (value) {
+        0 => MLX_LLM_STATUS_OK,
+        1 => MLX_LLM_STATUS_ERROR,
+        2 => MLX_LLM_STATUS_INVALID_ARGUMENT,
+        3 => MLX_LLM_STATUS_UNSUPPORTED_PLATFORM,
+        4 => MLX_LLM_STATUS_MODEL_NOT_FOUND,
+        5 => MLX_LLM_STATUS_ALREADY_ACTIVE_GENERATION,
+        6 => MLX_LLM_STATUS_INVALID_HANDLE,
+        _ => throw ArgumentError('Unknown value for mlx_llm_status_: $value'),
+      };
+}
+
+/// Stop-sequence handling mode.
+enum mlx_llm_stop_handling_strategy_ {
+  MLX_LLM_STOP_HANDLING_TRUNCATE(0),
+  MLX_LLM_STOP_HANDLING_INCLUDE_STOP(1);
+
+  final int value;
+  const mlx_llm_stop_handling_strategy_(this.value);
+
+  static mlx_llm_stop_handling_strategy_ fromValue(int value) =>
+      switch (value) {
+        0 => MLX_LLM_STOP_HANDLING_TRUNCATE,
+        1 => MLX_LLM_STOP_HANDLING_INCLUDE_STOP,
+        _ => throw ArgumentError(
+            'Unknown value for mlx_llm_stop_handling_strategy_: $value'),
+      };
+}
+
+/// Text generation sampling options.
+final class mlx_llm_sampling_options_ extends ffi.Struct {
+  @ffi.Float()
+  external double temperature;
+
+  @ffi.Float()
+  external double top_p;
+
+  @ffi.Int()
+  external int top_k;
+
+  @ffi.Int()
+  external int max_tokens;
+
+  @ffi.Float()
+  external double repetition_penalty;
+
+  @ffi.Bool()
+  external bool has_seed;
+
+  @ffi.UnsignedInt()
+  external int seed;
+
+  external ffi.Pointer<ffi.Pointer<ffi.Char>> stop_sequences;
+
+  @ffi.Size()
+  external int stop_sequence_count;
+
+  @ffi.UnsignedInt()
+  external int stop_handlingAsInt;
+
+  mlx_llm_stop_handling_strategy_ get stop_handling =>
+      mlx_llm_stop_handling_strategy_.fromValue(stop_handlingAsInt);
+}
+
+typedef mlx_llm_sampling_options = mlx_llm_sampling_options_;

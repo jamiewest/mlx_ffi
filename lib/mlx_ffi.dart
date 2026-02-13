@@ -1,11 +1,17 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
+export 'src/generated/mlx_bindings.dart';
+
 import 'src/generated/mlx_bindings.dart';
 
-export 'src/generated/mlx_bindings.dart';
+part 'src/llm/mlx_llm_sampling_options.dart';
+part 'src/llm/mlx_llm_model.dart';
+part 'src/llm/mlx_llm_generation.dart';
+part 'src/llm/mlx_llm.dart';
 
 final class MlxException implements Exception {
   MlxException(this.operation, this.code, [this.message]);
