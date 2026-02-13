@@ -148,6 +148,29 @@ Output default:
 build/apple/MLXC.xcframework
 ```
 
+## Automated GitHub Releases
+
+This repository includes `.github/workflows/release-on-build-change.yml`.
+
+On pushes to the repository default branch (or manual dispatch), it:
+
+- builds shared macOS libraries (`libmlxc.dylib`, plus `libmlx.dylib` when present),
+- builds and zips `MLXC.xcframework`,
+- computes a build fingerprint from compiled artifacts, and
+- creates a new GitHub Release only when that fingerprint differs from the latest release.
+
+Release assets include:
+
+- `MLXC.xcframework.zip`
+- `mlx-macos-dylibs.tar.gz`
+- `mlx_ffi-source.zip`
+- `build-fingerprint.txt`
+- `build-manifest.json`
+
+GitHub also provides the default source archives (`.zip` and `.tar.gz`) for each release tag.
+
+Note: this workflow currently produces macOS artifacts because upstream MLX targets Apple Silicon.
+
 ## Vendored source
 
 `mlx-c` is vendored at `third_party/mlx-c` and used as the header source for generation.

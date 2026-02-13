@@ -1,0 +1,188 @@
+name: Release On Build Change
+
+on:
+  push:
+    paths:
+      - "third_party/mlx-c/**"
+      - "lib/**"
+      - "tool/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "ffigen.yaml"
+      - ".github/workflows/release-on-build-change.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-on-build-change-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos:
+    name: Build macOS artifacts
+    runs-on: macos-14
+    if: github.event_name == 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Fetch Dart packages
+        run: dart pub get
+
+      - name: Configure shared build
+        run: |
+          cmake -S third_party/mlx-c -B build/mlx-shared \
+            -DBUILD_SHARED_LIBS=ON \
+            -DMLX_C_BUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build shared libraries
+        run: cmake --build build/mlx-shared --config Release --parallel
+
+      - name: Build XCFramework
+        run: dart run tool/build_apple_xcframework.dart
+
+      - name: Package artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/lib
+
+          mlxc_path="$(find build/mlx-shared -type f -name 'libmlxc.dylib' | head -n 1)"
+          if [ -z "${mlxc_path}" ]; then
+            echo "::error::Could not find libmlxc.dylib under build/mlx-shared"
+            exit 1
+          fi
+          cp "${mlxc_path}" artifacts/lib/
+
+          mlx_core_path="$(find build/mlx-shared -type f -name 'libmlx.dylib' | head -n 1 || true)"
+          if [ -n "${mlx_core_path}" ]; then
+            cp "${mlx_core_path}" artifacts/lib/
+          fi
+
+          tar -C artifacts/lib -czf artifacts/mlx-macos-dylibs.tar.gz .
+          ditto -c -k --sequesterRsrc --keepParent build/apple/MLXC.xcframework artifacts/MLXC.xcframework.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-assets
+          if-no-files-found: error
+          path: |
+            artifacts/mlx-macos-dylibs.tar.gz
+            artifacts/MLXC.xcframework.zip
+
+  release:
+    name: Create release if build changed
+    needs:
+      - build-macos
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-build-assets
+          path: release-assets
+
+      - name: Compute build fingerprint
+        run: |
+          set -euo pipefail
+          cd release-assets
+          sha256sum MLXC.xcframework.zip mlx-macos-dylibs.tar.gz | sort -k2 > build-fingerprint.txt
+
+      - name: Compare with latest release fingerprint
+        id: compare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          latest_tag="$(gh release view --json tagName --jq .tagName 2>/dev/null || true)"
+          echo "latest_tag=${latest_tag}" >> "${GITHUB_OUTPUT}"
+
+          if [ -z "${latest_tag}" ]; then
+            echo "should_release=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          mkdir -p previous-release
+          gh release download "${latest_tag}" \
+            --pattern "build-fingerprint.txt" \
+            --dir previous-release >/dev/null 2>&1 || true
+
+          if [ ! -f previous-release/build-fingerprint.txt ]; then
+            echo "should_release=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if cmp -s release-assets/build-fingerprint.txt previous-release/build-fingerprint.txt; then
+            echo "should_release=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "should_release=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Build source archive
+        if: steps.compare.outputs.should_release == 'true'
+        run: git archive --format=zip --output release-assets/mlx_ffi-source.zip HEAD
+
+      - name: Write build manifest
+        if: steps.compare.outputs.should_release == 'true'
+        env:
+          BASELINE_TAG: ${{ steps.compare.outputs.latest_tag }}
+        run: |
+          set -euo pipefail
+          generated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cat > release-assets/build-manifest.json <<EOF
+          {
+            "ref": "${GITHUB_REF}",
+            "sha": "${GITHUB_SHA}",
+            "generated_at_utc": "${generated_at}",
+            "comparison_baseline_tag": "${BASELINE_TAG}",
+            "fingerprint_file": "build-fingerprint.txt",
+            "artifacts": [
+              "MLXC.xcframework.zip",
+              "mlx-macos-dylibs.tar.gz",
+              "mlx_ffi-source.zip"
+            ]
+          }
+          EOF
+
+      - name: Set release metadata
+        if: steps.compare.outputs.should_release == 'true'
+        id: metadata
+        run: |
+          set -euo pipefail
+          timestamp="$(date -u +%Y%m%d-%H%M%S)"
+          short_sha="${GITHUB_SHA::7}"
+          echo "tag=build-${timestamp}-${short_sha}" >> "${GITHUB_OUTPUT}"
+          echo "name=Automated build ${timestamp} (${short_sha})" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish release
+        if: steps.compare.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.metadata.outputs.tag }}
+          name: ${{ steps.metadata.outputs.name }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            release-assets/MLXC.xcframework.zip
+            release-assets/mlx-macos-dylibs.tar.gz
+            release-assets/mlx_ffi-source.zip
+            release-assets/build-fingerprint.txt
+            release-assets/build-manifest.json
+
+      - name: Skip release
+        if: steps.compare.outputs.should_release != 'true'
+        run: echo "No build changes detected. Release was not created."
